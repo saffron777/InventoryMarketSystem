@@ -19,6 +19,22 @@ namespace IMS.Plugins.EFCore
             this.db = db;
             this.productRepository = productRepository;
         }
+
+        public async Task<IEnumerable<ProductTransaction>> GetProductTransactionAsync(string productName, DateTime? dateFrom, DateTime? dateTo, ProductTransactionType? transactionType)
+        {
+           if(dateTo.HasValue)  dateTo = dateTo.Value.AddDays(1);
+            var query = from pt in db.ProductTransactions
+                        join prod in db.Products on pt.ProductId equals prod.ProducId
+                        where
+                        (string.IsNullOrWhiteSpace(productName) || prod.ProductName.ToLower() == productName.ToLower() ) &&
+                        (!dateFrom.HasValue || pt.TransactionDate.Date >= dateFrom.Value.Date) &&
+                        (!dateTo.HasValue || pt.TransactionDate.Date <= dateTo.Value.Date) &&
+                        (!transactionType.HasValue || pt.ActivityType == transactionType)
+                        select pt;
+
+            return await query.Include(x=> x.Product).ToListAsync();
+        }
+
         public async Task ProduceAsync(string productionNumber, Product product, int quantity, double price, string doneBy)
         {
             //var prod = await db.Products
@@ -32,9 +48,24 @@ namespace IMS.Plugins.EFCore
             {
                 foreach (var pi in prod.ProductInventories)
                 {
+                    int qtyBefore = pi.Inventory.Quantity;
                     pi.Inventory.Quantity -= quantity * pi.InventoryQuantity;
+
+                    this.db.InventoryTransactions.Add(new InventoryTransaction
+                    {
+                        ProductionNumber = productionNumber,                        
+                        QuantityBefore = qtyBefore,
+                        QuantityAfter = pi.Inventory.Quantity ,
+                        ActivityType = InventoryTransactionType.ProduceProduct,
+                        TransactionDate = DateTime.Now,
+                        DoneBy = doneBy,
+                        UnitPrice = price * quantity,
+
+                    });
                 }
             }
+
+            
 
             this.db.ProductTransactions.Add(new ProductTransaction
             {
@@ -50,6 +81,23 @@ namespace IMS.Plugins.EFCore
             });
 
             await db.SaveChangesAsync();
+        }
+
+        public async Task SellProductAsync(string saleOrderNumber, Product product, int quantity, double price, string doneBy)
+        {
+            this.db.ProductTransactions.Add(new ProductTransaction
+            {
+                SalesOrderNumber = saleOrderNumber,
+                ProductId = product.ProducId,
+                QuantityBefore = product.Quantity,
+                QuantityAfter = product.Quantity - quantity,
+                TransactionDate = DateTime.Now,
+                DoneBy = doneBy,
+                UnitPrice = price,
+                 ActivityType = ProductTransactionType.SellProduct,
+            });
+
+            await this.db.SaveChangesAsync();
         }
     }
 }

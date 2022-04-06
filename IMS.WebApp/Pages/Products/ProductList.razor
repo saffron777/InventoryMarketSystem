@@ -1,5 +1,7 @@
 ﻿@page "/products"
 
+@attribute [Authorize]
+
 @inject IViewProductsByNameUseCase ViewProductsByNameUseCase
 @inject NavigationManager NavigationManager
 

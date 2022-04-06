@@ -1,6 +1,7 @@
 using IMS.Plugins.EFCore;
 using IMS.UseCases;
 using IMS.UseCases.PluginInterfaces;
+using IMS.UseCases.Reports;
 using IMS.WebApp.Areas.Identity;
 using IMS.WebApp.Data;
 using Microsoft.AspNetCore.Components;
@@ -25,7 +26,8 @@ builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuth
 builder.Services.AddSingleton<WeatherForecastService>();
 
 builder.Services.AddDbContext<IMSContext>(options => {
-    options.UseInMemoryDatabase("IMS");
+    //options.UseInMemoryDatabase("IMS");
+    options.UseSqlServer(builder.Configuration.GetConnectionString("InventoryManagement"));
 });
 
 //repositories
@@ -47,13 +49,16 @@ builder.Services.AddTransient<IDeleteProductUseCase, DeleteProductUseCase>();
 builder.Services.AddTransient<IPurchaseInventoryUseCase, PurchaseInventoryUseCase>();
 builder.Services.AddTransient<IProduceProductUseCase, ProduceProductUseCase>();
 builder.Services.AddTransient<IValidateEnoughInventoriesForProducingUseCase, ValidateEnoughInventoriesForProducingUseCase>();
+builder.Services.AddTransient<ISellProductUseCase, SellProductUseCase>();
+builder.Services.AddTransient<ISearchInventoryTransactionsUseCase, SearchInventoryTransactionsUseCase>();
+builder.Services.AddTransient<ISearchProductTransactionsUseCase, SearchProductTransactionsUseCase>();
 
 var app = builder.Build();
 
 var scope = app.Services.CreateScope();
 var imsContext = scope.ServiceProvider.GetRequiredService<IMSContext>();
-imsContext.Database.EnsureDeleted();
-imsContext.Database.EnsureCreated();
+//imsContext.Database.EnsureDeleted();
+//imsContext.Database.EnsureCreated();
 
 
 

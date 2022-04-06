@@ -55,12 +55,12 @@ namespace IMS.Plugins.EFCore
 
         public async Task<List<Product>> GetProductsByNameAsync(string name)
         {
-            return await db.Products.Where(x => (x.ProductName.Contains(name, StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(name)) && x.IsActive==true).ToListAsync();
+            return await db.Products.Where(x => (x.ProductName.ToLower() == name.ToLower() || string.IsNullOrWhiteSpace(name)) && x.IsActive==true).ToListAsync();
         }
 
         public async Task UpdateProductAsync(Product product)
         {
-            if( db.Products.Any(x => x.ProductName.Contains(product.ProductName, StringComparison.OrdinalIgnoreCase))) return;
+            if( db.Products.Any(x => x.ProductName.ToLower() == product.ProductName.ToLower())) return;
 
 
             var prod = await db.Products.FindAsync(product.ProducId);

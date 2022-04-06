@@ -28,7 +28,7 @@ namespace IMS.Plugins.EFCore
         public async Task UpdateInventoryAsync(Inventory inventory)
         {
 
-            if (db.Inventories.Any(x => x.InventoryId != inventory.InventoryId && x.InventoryName.Equals(inventory.InventoryName, StringComparison.OrdinalIgnoreCase)))
+            if (db.Inventories.Any(x => x.InventoryId != inventory.InventoryId && x.InventoryName.ToLower() == inventory.InventoryName.ToLower()))
                 return;
 
             var inv = await db.Inventories.FirstOrDefaultAsync(x => x.InventoryId == inventory.InventoryId);
@@ -46,7 +46,7 @@ namespace IMS.Plugins.EFCore
 
         public async Task<IEnumerable<Inventory>> GetInventoriesByName(string name)
         {
-            return await this.db.Inventories.Where(x => x.InventoryName.Contains(name, StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(name)).ToListAsync();
+            return await this.db.Inventories.Where(x => x.InventoryName.ToLower().IndexOf(name.ToLower()) >=0 || string.IsNullOrWhiteSpace(name)).ToListAsync();
         }
 
         public async Task<Inventory?> GetInventoryByIdAsync(int inventoryId)
